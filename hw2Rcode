@@ -52,32 +52,6 @@ data <- data %>%
   mutate(across(all_of(variables), ~ ifelse(. %in% codes, NA, .))) %>%
   na.omit()
 
-#Exploratory Data Analysis
-
-# 1) Age distribution by stroke status
-ggplot(data, aes(x = Age, fill = Stroke)) +
-  geom_histogram(alpha = 0.6, bins = 30, position = "identity") +
-  labs(title = "Age Distribution by Stroke Outcome",
-       x = "Age (years)",
-       y = "Count") +
-  theme_minimal()
-
-# 2) Sleep hours by stroke status
-ggplot(data, aes(x = Stroke, y = `Hours Of Sleep`, fill = Stroke)) +
-  geom_boxplot() +
-  labs(title = "Hours of Sleep by Stroke Outcome",
-       x = "Stroke",
-       y = "Hours of Sleep") +
-  theme_minimal()
-
-# 3) Stroke counts by sex
-ggplot(data, aes(x = Sex, fill = Stroke)) +
-  geom_bar(position = "dodge") +
-  labs(title = "Stroke Counts by Sex",
-       x = "Sex",
-       y = "Count") +
-  theme_minimal()
-
 # Scaling the variables variables
 data[variables] <- scale(data[variables])
 
