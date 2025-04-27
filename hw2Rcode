@@ -1,0 +1,196 @@
+#Imported all the necessary libraries
+library(tidyverse)
+library(e1071)
+library(caret)
+library(ggplot2)
+library(dplyr)
+
+# I've set the working directory and loaded 'nhis_2022.csv' into data
+data <- read.csv("C:/Users/alekh/Downloads/nhis_2022.csv")
+
+# Exploring the data
+head(data)
+summary(data)
+str(data)
+
+# Subsetting the data, taking only adults, i.e., between the ages 18 and 70.
+# Converting numeric variables to categoric factors.
+data <- data %>%
+  filter(AGE >= 18, AGE <= 70, STROKEV %in% c(1,2)) %>%
+  mutate(
+    Sex = factor(SEX, levels = c(1,2), labels = c("Male","Female")),
+    Stroke = factor(STROKEV, levels = c(1,2), labels = c("No","Yes"))
+  )
+
+
+# Renaming variables to clear column names.
+names(data)[names(data)=="AGE"] <- "Age"
+names(data)[names(data)=="HRSLEEP"] <- "Hours Of Sleep"
+names(data)[names(data)=="HOURSWRK"] <- "Hours Worked"
+names(data)[names(data)=="ALCDAYSYR"] <- "Alcohol Consumption Days Per Year"
+names(data)[names(data)=="CIGDAYMO"] <- "Cigarettes Consumed Per Month"
+names(data)[names(data)=="MOD10DMIN"] <- "Duration Of Moderate Activity(in mins)"
+names(data)[names(data)=="VIG10DMIN"] <- "Duration Of Vigorous Activity(in mins)"
+
+# Predicting the stroke status (Yes/No) in adults (18–70) 
+# using SVMs on predictors:
+# Age, Sex, Hours Of Sleep, Hours Worked,Alcohol Consumption Days
+# Cigarettes/Month, Moderate & Vigorous Activity (mins).
+
+
+# Cleaning the invalid codes and then replace those with NA, 
+#lastly, drop those null values.
+codes <- c(996, 997, 998, 999)
+variables <- c("Age", "Hours Of Sleep", "Hours Worked",
+               "Alcohol Consumption Days Per Year", 
+               "Cigarettes Consumed Per Month",
+               "Duration Of Moderate Activity(in mins)", 
+               "Duration Of Vigorous Activity(in mins)")
+# Keeping both Moderate and Vigorous activity 
+#since they are not highly correlated.
+data <- data %>%
+  mutate(across(all_of(variables), ~ ifelse(. %in% codes, NA, .))) %>%
+  na.omit()
+
+#Exploratory Data Analysis
+
+# 1) Age distribution by stroke status
+ggplot(data, aes(x = Age, fill = Stroke)) +
+  geom_histogram(alpha = 0.6, bins = 30, position = "identity") +
+  labs(title = "Age Distribution by Stroke Outcome",
+       x = "Age (years)",
+       y = "Count") +
+  theme_minimal()
+
+# 2) Sleep hours by stroke status
+ggplot(data, aes(x = Stroke, y = `Hours Of Sleep`, fill = Stroke)) +
+  geom_boxplot() +
+  labs(title = "Hours of Sleep by Stroke Outcome",
+       x = "Stroke",
+       y = "Hours of Sleep") +
+  theme_minimal()
+
+# 3) Stroke counts by sex
+ggplot(data, aes(x = Sex, fill = Stroke)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Stroke Counts by Sex",
+       x = "Sex",
+       y = "Count") +
+  theme_minimal()
+
+# Scaling the variables variables
+data[variables] <- scale(data[variables])
+
+# Splitting the data into train and test sets.
+set.seed(42)
+train_data <- createDataPartition(data$Stroke, p = 0.7, list = FALSE)
+train_set <- data[train_data, ]    
+test_set <- data[-train_data, ] 
+
+# Increased 'Yes' class weight to 50 
+#to force the model to better recognize 
+#minority class during training.
+weights <- c("No" = 1, "Yes" = 50)
+
+#PART 1: Linear SVM 
+set.seed(42)
+tune_one <- tune(svm,
+                 Stroke ~ `Age` + Sex + `Hours Of Sleep` + `Hours Worked` 
+                 + `Alcohol Consumption Days Per Year` 
+                 + `Cigarettes Consumed Per Month`
+                 + `Duration Of Moderate Activity(in mins)` 
+                 + `Duration Of Vigorous Activity(in mins)`,
+                 data          = train_set, kernel        = "linear",
+                 ranges        = list(cost = c(0.01, 0.1, 1)), 
+                 class.weights = weights)
+
+# Choosing the best linear svm from tuning
+svm_one <- tune_one$best.model
+
+# Prediction and evaluation metrics
+prediction_one <- predict(svm_one, test_set)
+confusion_mat_one <- confusionMatrix(prediction_one, test_set$Stroke)
+print(confusion_mat_one)
+precision_one <- posPredValue(prediction_one, test_set$Stroke, positive = "Yes")
+recall_one <- sensitivity(prediction_one,  test_set$Stroke, positive = "Yes")
+f1_one <- 2 * (precision_one * recall_one) / (precision_one + recall_one)
+accuracy_one <- confusion_mat_one$overall["Accuracy"]
+precision_one
+recall_one
+f1_one 
+accuracy_one
+
+
+#PART 2: Radial SVM  
+tune_two <- tune(svm,
+                 Stroke ~ `Age` + Sex + `Hours Of Sleep` + `Hours Worked` 
+                 + `Alcohol Consumption Days Per Year` 
+                 + `Cigarettes Consumed Per Month`
+                 + `Duration Of Moderate Activity(in mins)` 
+                 + `Duration Of Vigorous Activity(in mins)`,
+                 data          = train_set,
+                 kernel        = "radial",
+                 ranges        = list(cost = c(0.1, 1), gamma = c(0.01, 0.1)),
+                 class.weights = weights)
+
+# Choosing the best radial svm from tuning
+svm_two <- tune_two$best.model
+svm_two
+
+# Prediction and evaluation metrics
+prediction_two <- predict(svm_two,    test_set)
+confusion_mat_two <- confusionMatrix(prediction_two, test_set$Stroke)
+print(confusion_mat_two)
+precision_two <- posPredValue(prediction_two, test_set$Stroke, positive = "Yes")
+recall_two<- sensitivity(prediction_two,  test_set$Stroke, positive = "Yes")
+f1_two<- 2 * (precision_two * recall_two) / (precision_two + recall_two)
+accuracy_two<- confusion_mat_two$overall["Accuracy"]
+precision_two
+recall_two
+f1_two 
+accuracy_two
+
+#PART 3: Polynomial SVM 
+tune_three <- tune(svm,
+                   Stroke ~ `Age` + Sex + `Hours Of Sleep` + `Hours Worked` 
+                   + `Alcohol Consumption Days Per Year` 
+                   + `Cigarettes Consumed Per Month`
+                   + `Duration Of Moderate Activity(in mins)` 
+                   + `Duration Of Vigorous Activity(in mins)`,
+                   data          = train_set, kernel        = "polynomial",
+                   ranges        = list(cost   = c(0.1,1), degree = c(3,4),
+                                        coef0  = c(0.5,1)),
+                   class.weights = weights)
+
+# Choosing the best polynomial svm from tuning
+svm_three <- tune_three$best.model
+svm_three
+
+# Prediction and evaluation metrics
+prediction_three<- predict(svm_three,    test_set)
+confusion_mat_three  <- confusionMatrix(prediction_three, test_set$Stroke)
+print(confusion_mat_three)
+precision_three<- posPredValue(prediction_three, test_set$Stroke, positive = "Yes")
+recall_three<- sensitivity(prediction_three,  test_set$Stroke, positive = "Yes")
+f1_three <- 2 * (precision_three * recall_three) / (precision_three + recall_three)
+accuracy_three  <- confusion_mat_three$overall["Accuracy"]
+precision_three
+recall_three 
+f1_three 
+accuracy_three 
+
+# Comparing the accuarcy results by plotting
+model_results <- data.frame(
+  Model = c("Linear SVM", "Radial SVM", "Polynomial SVM"),
+  Accuracy = c(accuracy_one, accuracy_two, accuracy_three)
+)
+
+ggplot(model_results, aes(x = Model, y = Accuracy)) +
+  geom_col() +
+  ylim(0, 1) +
+  labs(title = "SVM Model Accuracies", x = "Model", y = "Accuracy") +
+  theme_minimal()
+
+#From the above plot, polynomial model has performed the highest, 
+#about 73 % , radial performs next best , 
+#and then linear svm performs good, does purely linear separation. 
