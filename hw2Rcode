@@ -194,3 +194,23 @@ ggplot(model_results, aes(x = Model, y = Accuracy)) +
 #From the above plot, polynomial model has performed the highest, 
 #about 73 % , radial performs next best , 
 #and then linear svm performs good, does purely linear separation. 
+
+
+#RESULTS: The linear SVM, with best cost 1 , has 8739 support vectors, 
+#suggesting high complexity, and it has an accuracy of 70%. 
+#It is poor at detecting strokes, precision is 5.1%; 
+
+#The radial SVM, with best cost 1 and gamma 0.1 , 
+#has 7352 support vectors,so its efiicient, 
+#and it has an accuracy of 70.89%. 
+#It is slightly better than linear svm, 
+#but still poor at detecting strokes, precision is 5.21%;
+
+#The polynomial SVM is the best among all, 
+#with best cost 1, degree 4, and coef0 0.5 , has 6850 support vectors, 
+#and it has an accuracy of 72.66%. 
+#It is still suffers from low precision like the rest of the two models,
+#for "Yes" , but has better F1-score.
+
+#The minority class is "yes" stroke and 
+#all the three models perform poorly in this one.
