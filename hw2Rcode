@@ -64,6 +64,9 @@ test_set <- data[-train_data, ]
 # Increased 'Yes' class weight to 50 
 #to force the model to better recognize 
 #minority class during training.
+# Chosen this setting of balance, to address the imbalance
+# while avoiding extremes. This ratio improved 
+# stroke detection without excessive false alarms.
 weights <- c("No" = 1, "Yes" = 50)
 
 #PART 1: Linear SVM 
