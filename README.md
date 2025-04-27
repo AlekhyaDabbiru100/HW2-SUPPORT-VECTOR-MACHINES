@@ -4,4 +4,5 @@ TITLE: PREDICTING ADULT STROKE RISK USING SUPPORT VECTOR MACHINES ON 'NHIS 2022'
 
 FILES:
 Rcode
-PDF version of the Rmd
+PDF version of the RMD.
+PDF version of the exploratory data analysis RMD.
