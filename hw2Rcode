@@ -52,6 +52,52 @@ data <- data %>%
   mutate(across(all_of(variables), ~ ifelse(. %in% codes, NA, .))) %>%
   na.omit()
 
+#Exploratory Data Analysis
+# Histogram of Age distribution by Age
+ggplot(data, aes(x = Age, fill = Stroke)) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 30) +
+  labs(
+    title = "Age Distribution by Stroke Status",
+    fill  = "Stroke"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position   = "top"
+  )
+
+# A density plot of sleeping hours by Stroke
+ggplot(data, aes(x = `Hours Of Sleep`, fill = Stroke)) +
+  geom_density(alpha = 0.6, color = NA) +
+  coord_cartesian(xlim = c(0, 13)) +
+  labs(
+    title = "Distribution of the Sleep Hours by Stroke",
+    fill  = "Stroke"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position  = "top"
+  )
+
+# Computing correlation between moderate & vigorous activity
+correlation <- cor(
+  data$`Duration Of Moderate Activity(in mins)`,
+  data$`Duration Of Vigorous Activity(in mins)`
+)
+print(paste("Correlation (r) =", round(correlation, 5)))
+
+# Plotting the above
+ggplot(data, aes(
+    x = `Duration Of Moderate Activity(in mins)`,
+    y = `Duration Of Vigorous Activity(in mins)`
+  )) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE,
+              color = "green") +
+  labs(
+    title = "Moderate Activity vs Vigorous Activity (mins)",
+  ) +
+  theme_minimal()
+
 # Scaling the variables variables
 data[variables] <- scale(data[variables])
 
