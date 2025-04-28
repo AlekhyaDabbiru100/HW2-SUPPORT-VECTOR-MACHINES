@@ -6,3 +6,4 @@ FILES:
 Rcode
 PDF version of the RMD.
 PDF version of the exploratory data analysis RMD.
+Poster 
