@@ -143,6 +143,32 @@ recall_one
 f1_one 
 accuracy_one
 
+# Extracting variable importance from the fitted linear SVM model
+weight_vector <- as.numeric(t(svm_one$coefs) %*% svm_one$SV)
+names(weight_vector) <- colnames(svm_one$SV)
+
+#'importance_df' consists ofabsolute weights and sort them in decreasing order
+importance_df <- data.frame(
+  Variable = names(weight_vector),
+  Importance = abs(weight_vector)
+)
+importance_df <- importance_df[order(importance_df$Importance, decreasing = TRUE), ]
+
+#Plotting the variable importance
+ggplot(importance_df, aes(
+  x = reorder(Variable, Importance),
+  y = Importance
+)) +
+  geom_col(fill = "#619CFF") +
+  coord_flip() +
+  labs(
+    title = "Variable Importance (Linear SVM)",
+    x     = NULL,
+    y     = "Importance"
+  ) +
+  theme_minimal(base_size = 13)
+
+ggsave("variable_imp.png", width = 5, height = 5, dpi = 350)
 
 #PART 2: Radial SVM  
 tune_two <- tune(svm,
