@@ -240,7 +240,58 @@ ggplot(model_results, aes(x = Model, y = Accuracy)) +
   labs(title = "SVM Model Accuracies", x = "Model", y = "Accuracy") +
   theme_minimal()
 
-#From the above plot, polynomial model has performed the highest, 
+# creating the model evaluation table
+evaluation_table <- data.frame(
+  Model     = c("Linear SVM", "Radial SVM", "Polynomial SVM"),
+  Accuracy  = c(accuracy_one, accuracy_two, accuracy_three),
+  Precision = c(precision_one, precision_two, precision_three),
+  Recall    = c(recall_one, recall_two, recall_three),
+  F1_Score  = c(f1_one, f1_two, f1_three)
+)
+
+# rounding off the numeric values to present
+evaluation_table <- evaluation_table %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+print(evaluation_table)
+
+# Subset training data with the two strong predictors
+train_subset <- train_set %>%
+  select(`Hours Worked`, Age, Stroke)
+
+# Fitting the linear SVM with the two predictors and one respone variables.
+svm_four <- svm(Stroke ~ `Hours Worked` + Age,
+                         data = train_subset,
+                         kernel = "linear",
+                         cost = 1,
+                         scale = TRUE,
+                         class.weights = weights)
+
+# Creating a grid and then plotting
+x_seq <- seq(min(train_subset$`Hours Worked`), max(train_subset$`Hours Worked`), length.out = 200)
+y_seq <- seq(min(train_subset$Age), max(train_subset$Age), length.out = 200)
+grid <- expand.grid(`Hours Worked` = x_seq, Age = y_seq)
+grid$Prediction <- predict(svm_four, grid)
+
+ggplot() +
+  geom_tile(data = grid, aes(x = `Hours Worked`, y = Age, fill = Prediction), alpha = 0.3) +
+  geom_point(data = train_subset, aes(x = `Hours Worked`, y = Age, shape = Stroke, color = Stroke), size = 2.0) +
+  scale_fill_manual(values = c("No" = "#FFC0CB", "Yes" = "#90EE90")) +  
+  scale_color_manual(values = c("No" = "deeppink3", "Yes" = "forestgreen")) +
+  labs(title = "Linear SVM Decision Boundary",
+       x = "Hours Worked",
+       y = "Age",
+       fill = "SVM Region",
+       color = "Stroke Status",
+       shape = "Stroke Status") +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  
+    legend.position = "right"
+  )
+ggsave("linear_svm2.png", width = 4, height = 4, dpi = 350)
+
+#From the above plots, polynomial model has performed the highest, 
 #about 73 % , radial performs next best , 
 #and then linear svm performs good, does purely linear separation. 
 
