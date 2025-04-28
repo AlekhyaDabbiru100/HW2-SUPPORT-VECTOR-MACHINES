@@ -167,8 +167,7 @@ ggplot(importance_df, aes(
     y     = "Importance"
   ) +
   theme_minimal(base_size = 13)
-
-ggsave("variable_imp.png", width = 5, height = 5, dpi = 350)
+ggsave("variable_imp.png", width = 5, height = 5, dpi = 350, bg = "white")
 
 #PART 2: Radial SVM  
 tune_two <- tune(svm,
@@ -289,7 +288,7 @@ ggplot() +
     plot.title = element_text(hjust = 0.5, face = "bold"),  
     legend.position = "right"
   )
-ggsave("linear_svm2.png", width = 4, height = 4, dpi = 350)
+ggsave("linear_svm2.png", width = 4, height = 4, dpi = 350, bg = "white")
 
 #From the above plots, polynomial model has performed the highest, 
 #about 73 % , radial performs next best , 
